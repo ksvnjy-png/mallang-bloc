@@ -1,0 +1,31 @@
+{
+    "id":  "./",
+    "name":  "말랑블록 우주",
+    "short_name":  "우주블록",
+    "start_url":  "./",
+    "scope":  "./",
+    "display":  "fullscreen",
+    "orientation":  "portrait",
+    "background_color":  "#130e2e",
+    "theme_color":  "#150f38",
+    "icons":  [
+                  {
+                      "purpose":  "any",
+                      "type":  "image/png",
+                      "sizes":  "192x192",
+                      "src":  "icon-192.png"
+                  },
+                  {
+                      "purpose":  "any",
+                      "type":  "image/png",
+                      "sizes":  "512x512",
+                      "src":  "icon-512.png"
+                  },
+                  {
+                      "purpose":  "maskable",
+                      "type":  "image/png",
+                      "sizes":  "512x512",
+                      "src":  "icon-512.png"
+                  }
+              ]
+}
