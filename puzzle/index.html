@@ -137,7 +137,7 @@
     <div class="logo"><span>서희의</span><br><span class="pk">말랑</span><span>퍼즐</span><small>MALLANG PUZZLE</small></div>
     <svg class="hero" id="heroArt" viewBox="-120 -175 240 260"></svg>
     <div class="blink">화면을 톡! 눌러 주세요</div>
-    <div class="ver">v2 · 서희 전용 게임</div>
+    <div class="ver">v5 · 서희 전용 게임</div>
   </div>
 
   <!-- 메뉴 -->
@@ -269,7 +269,7 @@
 
 <script>
 /* ============ 그림 도구 ============ */
-const VW=400,VH=860,CS=42,BX=32,BY=196,BS=CS*8,LIFT=105,SX=[72,200,328],SY=640;
+const VW=400,VH=860,CS=46,BX=16,BY=186,BS=CS*8,LIFT=105,SX=[72,200,328],SY=652;
 const $=id=>document.getElementById(id);
 const G=(x,y,s,inner,cls='')=>`<g transform="translate(${x} ${y}) scale(${s})"><g class="${cls}">${inner}</g></g>`;
 function rng(s){return ()=>(s=(s*1664525+1013904223)%4294967296)/4294967296}
@@ -506,10 +506,10 @@ function clearFx(cells,L,n,pts,empty){
   sx/=cells.length;sy/=cells.length;
   const big=empty||n>=2||combo>=2,word=empty?'싹쓸이!':n>=4?'최고예요!':n===3?'대단해요!':n===2?'멋져요!':combo>=3?'굉장해요!':combo>=2?'잘했어요!':'좋아요!';
   if(big){let ry='';for(let i=0;i<12;i++){const a=i*30;ry+=`<path d="M0,0 L-14,-150 L14,-150Z" fill="${i%2?'#fff':GOLD}" opacity=".55" transform="rotate(${a})"/>`}
-    s+=`<g transform="translate(200 352)"><g class="rays">${ry}</g></g>`}
+    s+=`<g transform="translate(200 366)"><g class="rays">${ry}</g></g>`}
   const fs=big?(empty?50:46):34;
-  s+=`<g class="praise"><text x="200" y="${360+fs*.18}" text-anchor="middle" font-size="${fs}" fill="url(#goldT)" stroke="${G1}" stroke-width="7" stroke-linejoin="round" paint-order="stroke" style="filter:drop-shadow(0 4px 6px rgba(11,61,38,.45))">${word}</text>`
-    +(combo>=2?`<g transform="translate(200 ${394+fs*.18})"><rect x="-52" y="-17" width="104" height="30" rx="15" fill="#ec6f96" stroke="#fff" stroke-width="2.5"/><text y="4" text-anchor="middle" font-size="17" fill="#fff">콤보 ${combo}</text></g>`:'')+`</g>`;
+  s+=`<g class="praise"><text x="200" y="${374+fs*.18}" text-anchor="middle" font-size="${fs}" fill="url(#goldT)" stroke="${G1}" stroke-width="7" stroke-linejoin="round" paint-order="stroke" style="filter:drop-shadow(0 4px 6px rgba(11,61,38,.45))">${word}</text>`
+    +(combo>=2?`<g transform="translate(200 ${408+fs*.18})"><rect x="-52" y="-17" width="104" height="30" rx="15" fill="#ec6f96" stroke="#fff" stroke-width="2.5"/><text y="4" text-anchor="middle" font-size="17" fill="#fff">콤보 ${combo}</text></g>`:'')+`</g>`;
   s+=`<g class="floatup"><text x="${sx.toFixed(0)}" y="${sy.toFixed(0)}" text-anchor="middle" font-size="24" fill="#fff" stroke="${G2}" stroke-width="5" paint-order="stroke">+${pts}</text></g>`;
   addFx(s,1450);
   shake(empty||n>=3?3:n===2||combo>=3?2:1);
@@ -549,19 +549,19 @@ function gameOver(){sfx('fail');
   if(mode==='adv'){$('fMsg').textContent=info.boss?`돌이 ${advLeft()}개 남았어요. 조금만 더!`:`줄 ${advLeft()}개만 더 지우면 돼요!`;pop('pFail')}
   else{const nb=score>(save.best||0);if(nb)save.best=score;save.free=null;store();$('oScore').textContent=score.toLocaleString();
     $('oMsg').textContent=nb?'🎉 새 최고 점수예요!':`최고 점수 ${save.best.toLocaleString()}`;pop('pOver');if(nb)setTimeout(()=>sfx('win'),400)}}
-// v2: 성공 창 없이 판 위에서 짧게 축하하고 다음 단계로 바로 (50단계와 동물 친구 만날 때만 창)
+// 단계 성공 처리
 let flowTok=0;
 function stageClear(){const s=info.s,st=starsFor(moves),tok=flowTok;sfx('win');confetti();buzz([40,60,40]);
   save.stars[s]=Math.max(save.stars[s],st);save.open=Math.max(save.open,Math.min(50,s+1));
   const nf=info.boss&&!save.friends.includes(info.w);if(nf)save.friends.push(info.w);store();
-  let c=`<g class="fadein"><rect x="${BX}" y="${BY}" width="${BS}" height="${BS}" rx="15" fill="rgba(11,61,38,.62)"/></g>`;
-  c+=`<g class="praise" style="animation-duration:2.2s"><text x="200" y="330" text-anchor="middle" font-size="54" fill="url(#goldT)" stroke="${G1}" stroke-width="8" stroke-linejoin="round" paint-order="stroke">성공!</text></g>`;
-  [0,1,2].forEach(i=>c+=`<g transform="translate(${148+i*52} 382)"><g class="starpop" style="animation-delay:${300+i*250}ms"><path transform="scale(2.1)" d="${STAR}" fill="${i<st?GOLD:'rgba(255,255,255,.25)'}" stroke="${i<st?'#fff6c2':'none'}" stroke-width=".7" stroke-linejoin="round"/></g></g>`);
-  c+=`<g class="fadein" style="animation-delay:.6s"><text x="200" y="440" text-anchor="middle" font-size="17" fill="#fff">블록 ${moves}개로 깼어요${st<3?` · ${info.par}개 안이면 별 3개`:''}</text>`
-    +(s<50&&!nf?`<text x="200" y="470" text-anchor="middle" font-size="14" fill="${GOLD}">다음 단계로 가요!</text>`:'')+`</g>`;
-  addFx(c,2600);for(let i=0;i<st;i++)setTimeout(()=>sfx('star',i),350+i*250);say(st===3?'별 3개! 완벽해!':'서희 최고!');
-  const go=()=>{if(tok!==flowTok)return;if(s<50)startAdv(s+1);else showEnd()};
-  setTimeout(()=>{if(tok!==flowTok||screen!=='game')return;if(nf)showFriend(info.w,go);else go()},2300)}
+  // v5: 캡틴 요청으로 성공 창 복원 (v1과 같은 창: 별·블록 수·다음 단계/다시 하기/단계 고르기)
+  say(st===3?'별 3개! 완벽해!':'서희 최고!');
+  const showC=()=>{if(tok!==flowTok)return;
+    $('cStars').innerHTML=[0,1,2].map(i=>`<svg viewBox="-12 -12 24 24" class="${i<st?'got':''}" style="animation-delay:${i*.25}s"><path d="${STAR}" fill="${i<st?GOLD:'#e3ebe5'}" stroke="${i<st?'#d4a63a':'#d5e0d8'}" stroke-width=".8" stroke-linejoin="round"/></svg>`).join('');
+    $('cScore').textContent=`블록 ${moves}개로 깼어요`;
+    $('cMsg').textContent=s===50?'50단계를 모두 깼어요! 서희 최고!':st===3?'별 3개! 완벽해요!':`블록 ${info.par}개 안에 깨면 별 3개예요`;
+    $('bNext').textContent=s<50?'다음 단계 ▶':'메뉴로';pop('pClear');for(let i=0;i<st;i++)setTimeout(()=>sfx('star',i),250+i*250)};
+  setTimeout(()=>{if(tok!==flowTok||screen!=='game')return;if(nf)showFriend(info.w,showC);else showC()},900)}
 function showEnd(){const st=save.stars[50];
   $('cStars').innerHTML=[0,1,2].map(i=>`<svg viewBox="-12 -12 24 24" class="${i<st?'got':''}" style="animation-delay:${i*.25}s"><path d="${STAR}" fill="${i<st?GOLD:'#e3ebe5'}" stroke="${i<st?'#d4a63a':'#d5e0d8'}" stroke-width=".8" stroke-linejoin="round"/></svg>`).join('');
   $('cScore').textContent='50단계를 모두 깼어요!';$('cMsg').textContent='서희 최고! 별을 더 모으러 가 볼까?';$('bNext').textContent='메뉴로';pop('pClear')}
@@ -582,7 +582,7 @@ function startFree(cont){mode='free';info=null;reset();
   if(!tray.some(t=>t&&anyFit(board,t.id))){busy=true;setTimeout(noMoves,500)}}
 
 /* ============ 화면 이동 ============ */
-function show(id){screen=id;document.querySelectorAll('.scr').forEach(s=>s.classList.toggle('on',s.id===id));$('game').style.display=id==='game'?'':'none';if(id!=='game'){flowTok++;pop(null);drag=null;$('drag').innerHTML=''}}
+function show(id){screen=id;document.querySelectorAll('.scr').forEach(s=>s.classList.toggle('on',s.id===id));$('game').style.display=id==='game'?'':'none';pop(null);if(id!=='game'){flowTok++;drag=null;$('drag').innerHTML=''}}
 function pop(id){document.querySelectorAll('.ov').forEach(p=>p.classList.toggle('on',p.id===id))}
 const anyPop=()=>document.querySelector('.ov.on');
 function friendIcon(w,got){return `<div class="${got?'got':''}">${got?`<svg viewBox="-70 -70 140 140">${FRIENDS[w].art()}</svg>`:'?'}</div>`}
