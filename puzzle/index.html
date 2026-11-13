@@ -137,7 +137,7 @@
     <div class="logo"><span>서희의</span><br><span class="pk">말랑</span><span>퍼즐</span><small>MALLANG PUZZLE</small></div>
     <svg class="hero" id="heroArt" viewBox="-120 -175 240 260"></svg>
     <div class="blink">화면을 톡! 눌러 주세요</div>
-    <div class="ver">v6 · 서희 전용 게임</div>
+    <div class="ver">v7 · 서희 전용 게임</div>
   </div>
 
   <!-- 메뉴 -->
@@ -148,8 +148,8 @@
     <div class="friends" id="mFriends"></div>
     <div class="hint">10단계마다 동물 친구를 만나요</div>
     <div class="menuBtns">
-      <button class="btn" id="bAdv"></button>
-      <button class="btn p" id="bFree"></button>
+      <button class="btn" id="bFree"></button>
+      <button class="btn p" id="bAdv"></button>
       <div class="row3"><button class="btn v s" id="bStages">🗺️ 단계</button><button class="btn v s" id="bHelp">❓ 하는 법</button><button class="btn v s" id="bSet">⚙️ 설정</button></div>
     </div>
   </div>
@@ -171,6 +171,7 @@
         <li><b>콤보</b>계속 줄을 지우면 점수가 쑥쑥 올라가요</li>
         <li><b>생각</b>블록은 돌릴 수 없어요. 놓을 자리를 잘 골라요</li>
         <li><b>도움</b>놓을 곳이 없으면 토끼가 한 번 도와줘요</li>
+        <li><b>보물함</b>놓기 어려운 블록은 왼쪽 보물함에 쏙 넣어 두고 다음에 꺼내요</li>
       </ul>
       <div class="sec">모험</div>
       <ul class="list">
@@ -195,6 +196,7 @@
       <div class="tg">🎵 음악<button data-opt="music"></button></div>
       <div class="tg" style="flex-wrap:wrap;gap:.4em">🎶 음악 고르기<div id="songs" style="display:flex;flex-wrap:wrap;gap:.4em;width:100%"></div></div>
       <div class="tg">📳 진동<button data-opt="vib"></button></div>
+      <div class="tg">🫧 블록 말랑말랑<button data-opt="wobble"></button></div>
       <div class="tg" style="margin-top:2em">🗑️ 기록 처음으로<button id="bReset">지우기</button></div>
       <p style="font-size:.85em;color:#9aa8a0;text-align:center;margin-top:2em">기록은 이 핸드폰에만 저장돼요</p>
     </div>
@@ -269,7 +271,7 @@
 
 <script>
 /* ============ 그림 도구 ============ */
-const VW=400,VH=860,CS=46,BX=16,BY=186,BS=CS*8,LIFT=105,SX=[72,200,328],SY=652;
+const VW=400,VH=860,CS=46,BX=16,BY=186,BS=CS*8,LIFT=105,SX=[156,252,348],HX=60,TW=88,SY=652; // v7: 맨 왼쪽은 보관함, 오른쪽 3칸은 새 블록
 const $=id=>document.getElementById(id);
 const G=(x,y,s,inner,cls='')=>`<g transform="translate(${x} ${y}) scale(${s})"><g class="${cls}">${inner}</g></g>`;
 function rng(s){return ()=>(s=(s*1664525+1013904223)%4294967296)/4294967296}
@@ -425,17 +427,22 @@ function drawFrame(){
   s+=hcard(16,58,140,80)+hcard(164,58,220,80);
   s+=`<rect x="${BX-7}" y="${BY-7}" width="${BS+14}" height="${BS+14}" rx="22" fill="#fff" filter="url(#shd)"/><rect x="${BX}" y="${BY}" width="${BS}" height="${BS}" rx="15" fill="${BRD}"/>`;
   for(let r=0;r<8;r++)for(let c=0;c<8;c++)s+=`<rect x="${BX+c*CS+3}" y="${BY+r*CS+3}" width="${CS-6}" height="${CS-6}" rx="10" fill="rgba(255,255,255,.06)"/>`;
-  SX.forEach(x=>s+=`<rect x="${x-58}" y="${SY-56}" width="116" height="112" rx="24" fill="#fff" filter="url(#shd)"/><rect x="${x-58}" y="${SY-56}" width="116" height="112" rx="24" fill="none" stroke="#eef5f0" stroke-width="2"/>`);
+  SX.forEach(x=>s+=`<rect x="${x-TW/2}" y="${SY-56}" width="${TW}" height="112" rx="22" fill="#fff" filter="url(#shd)"/><rect x="${x-TW/2}" y="${SY-56}" width="${TW}" height="112" rx="22" fill="none" stroke="#eef5f0" stroke-width="2"/>`);
+  // 보물함(블록 보관): 분홍 점선 테두리 + '보물함' 글자
+  s+=`<rect x="${HX-TW/2}" y="${SY-56}" width="${TW}" height="112" rx="22" fill="#fff5f8" filter="url(#shd)"/><rect x="${HX-TW/2+3}" y="${SY-53}" width="${TW-6}" height="106" rx="19" fill="none" stroke="#f4a7b9" stroke-width="2.5" stroke-dasharray="6 5"/>`
+    +`<rect x="${HX-26}" y="${SY-68}" width="52" height="22" rx="11" fill="#ec6f96"/><text x="${HX}" y="${SY-52}" text-anchor="middle" font-size="12.5" fill="#fff">보물함</text>`;
   s+=G(46,814,.62,fBunny(),'float')+G(112,828,.44,fCat(),'float2')+G(164,838,.36,fSlime(),'float');
   $('frame').innerHTML=s;
 }
 
 /* ============ 게임 상태 ============ */
+let hold=null; // v7 보관함에 넣어 둔 블록
+const pc=i=>i==='h'?hold:tray[i];
 let screen='sTitle',mode=null,info=null,board=emptyBoard(),tray=[null,null,null],score=0,combo=0,noClear=0,moves=0,cleared=0,rescue=1,drag=null,busy=false,talk='',talkT=null;
 const diff=()=>mode==='adv'?Math.min(.75,(info.s-1)/65):Math.min(.85,score/5000);
 const stoneCount=()=>board.reduce((a,r)=>a+r.filter(v=>v&&v.g).length,0);
 const advLeft=()=>info.boss?stoneCount():Math.max(0,info.goal-cleared);
-function reset(){board=emptyBoard();tray=[null,null,null];score=0;combo=0;noClear=0;moves=0;cleared=0;rescue=1;drag=null;busy=false;talk='';$('fx').innerHTML=''}
+function reset(){board=emptyBoard();tray=[null,null,null];hold=null;score=0;combo=0;noClear=0;moves=0;cleared=0;rescue=1;drag=null;busy=false;talk='';$('fx').innerHTML=''}
 function placeStones(n,seed,low){const R=rng(seed);let k=0,guard=0;
   while(k<n&&guard++<3000){const r=low?3+Math.floor(R()*5):Math.floor(R()*8),c=Math.floor(R()*8);if(board[r][c])continue;
     if(board[r].filter(v=>v).length>=6||board.filter(row=>row[c]).length>=6)continue;board[r][c]={c:STONE,k:4,g:1};k++}}
@@ -444,20 +451,24 @@ function refill(){const d=diff(),easy=mode==='adv'||score<3000;let ids=null;
   for(let t=0;t<60&&!ids;t++){const c=[0,1,2].map(()=>pickId(d*(1-t/60)));if(easy?simAll(board,c):c.some(id=>anyFit(board,id)))ids=c}
   if(!ids)ids=[0,1,2].map(()=>pickId(0));
   const cols=shuffle(PAL.slice());tray=ids.map((id,i)=>mk(id,cols[i]))}
-function saveFree(){if(mode!=='free')return;save.free={b:board,t:tray,s:score,c:combo,n:noClear,r:rescue};store()}
+function saveFree(){if(mode!=='free')return;save.free={b:board,t:tray,h:hold,s:score,c:combo,n:noClear,r:rescue};store()}
 
 /* ============ 그리기 ============ */
-function preview(){const t=tray[drag.i],p=SHP[t.id],tmp=board.map(r=>r.slice());p.cells.forEach(([y,x])=>tmp[drag.r+y][drag.c+x]={c:t.col});return fullLines(tmp)}
-function drawCells(){let s='';const t=drag&&drag.ok?tray[drag.i]:null,L=t?preview():null,hl=(r,c)=>L&&(L.rows.includes(r)||L.cols.includes(c));
+function preview(){const t=pc(drag.i),p=SHP[t.id],tmp=board.map(r=>r.slice());p.cells.forEach(([y,x])=>tmp[drag.r+y][drag.c+x]={c:t.col});return fullLines(tmp)}
+function drawCells(){let s='';const t=drag&&drag.ok?pc(drag.i):null,L=t?preview():null,hl=(r,c)=>L&&(L.rows.includes(r)||L.cols.includes(c));
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){const v=board[r][c];if(!v)continue;const h=hl(r,c);s+=G(BX+c*CS,BY+r*CS,CS/32,candy(0,0,h?t.col:v.c,v.k,v.g&&!h))}
   if(t){SHP[t.id].cells.forEach(([y,x])=>{const r=drag.r+y,c=drag.c+x;s+=`<g opacity="${hl(r,c)?.95:.5}">${G(BX+c*CS,BY+r*CS,CS/32,candy(0,0,t.col,-1))}</g>`});
     if(L.rows.length+L.cols.length){L.rows.forEach(r=>s+=`<rect x="${BX+2}" y="${BY+r*CS+2}" width="${BS-4}" height="${CS-4}" rx="12" fill="none" stroke="#fff" stroke-width="2.5" opacity=".8"/>`);
       L.cols.forEach(c=>s+=`<rect x="${BX+c*CS+2}" y="${BY+2}" width="${CS-4}" height="${BS-4}" rx="12" fill="none" stroke="#fff" stroke-width="2.5" opacity=".8"/>`)}}
   $('cells').innerHTML=s}
 function pieceSvg(t,size,x0,y0){const p=SHP[t.id];let s='';p.cells.forEach(([r,c],j)=>s+=G(x0+c*size,y0+r*size,size/32,candy(0,0,t.col,j===t.fi?t.mood:-1)));return s}
-function drawTray(){let s='';tray.forEach((t,i)=>{if(!t||(drag&&drag.i===i))return;const p=SHP[t.id],sz=Math.min(24,92/Math.max(p.w,p.h)),ok=anyFit(board,t.id);
-  s+=`<g opacity="${ok?1:.32}">${pieceSvg(t,sz,SX[i]-p.w*sz/2,SY-p.h*sz/2)}</g>`});$('tray').innerHTML=s}
-function drawDrag(){if(!drag){$('drag').innerHTML='';return}const t=tray[drag.i],p=SHP[t.id];
+function drawTray(){let s='';const one=(t,cx,i)=>{if(!t||(drag&&drag.i===i))return;const p=SHP[t.id],sz=Math.min(21,72/Math.max(p.w,p.h)),ok=anyFit(board,t.id);
+  s+=`<g opacity="${ok?1:.32}">${pieceSvg(t,sz,cx-p.w*sz/2,SY+4-p.h*sz/2)}</g>`};
+  tray.forEach((t,i)=>one(t,SX[i],i));one(hold,HX,'h');
+  if(!hold&&!(drag&&drag.i!=='h'))s+=`<text x="${HX}" y="${SY+2}" text-anchor="middle" font-size="11.5" fill="#d58aa3">블록을</text><text x="${HX}" y="${SY+18}" text-anchor="middle" font-size="11.5" fill="#d58aa3">쏙 넣기</text>`;
+  if(drag&&drag.i!=='h'&&drag.overHold)s+=`<rect x="${HX-TW/2+3}" y="${SY-53}" width="${TW-6}" height="106" rx="19" fill="#ffd0dc" opacity=".55"/>`;
+  $('tray').innerHTML=s}
+function drawDrag(){if(!drag){$('drag').innerHTML='';return}const t=pc(drag.i),p=SHP[t.id];
   $('drag').innerHTML=`<g style="filter:drop-shadow(0 6px 8px rgba(16,48,30,.35))">${pieceSvg(t,CS,drag.x-p.w*CS/2,drag.y-LIFT-p.h*CS/2)}</g>`}
 function topBtn(cx,inner,on=true){return `<circle cx="${cx}" cy="30" r="16" fill="rgba(255,255,255,${on?.13:.06})" stroke="rgba(255,255,255,.22)"/><g transform="translate(${cx} 30)" opacity="${on?1:.6}">${inner}</g>`}
 function drawUi(){
@@ -521,7 +532,7 @@ function confetti(){let s='';for(let i=0;i<30;i++)s+=`<g class="spark" style="an
 /* ============ 놓기 ============ */
 const CHEER=['좋아요!','와, 잘한다!','서희 최고!','반짝반짝!','멋져요!','우와~!'];
 function placePiece(i,r0,c0){
-  const t=tray[i],p=SHP[t.id];tray[i]=null;moves++;
+  const t=pc(i),p=SHP[t.id];if(i==='h')hold=null;else tray[i]=null;moves++;
   p.cells.forEach(([r,c],j)=>board[r0+r][c0+c]={c:t.col,k:j===t.fi?t.mood:-1});
   score+=p.cells.length;sfx('place');buzz(12);landFx(p.cells.map(([r,c])=>[r0+r,c0+c]));
   const L=fullLines(board),n=L.rows.length+L.cols.length;
@@ -538,7 +549,7 @@ function placePiece(i,r0,c0){
 function afterMove(){
   if(mode==='adv'&&advLeft()<=0){busy=true;const tok=flowTok;setTimeout(()=>{if(tok===flowTok&&screen==='game')stageClear()},1050);return}
   if(tray.every(t=>!t))refill();
-  if(!tray.some(t=>t&&anyFit(board,t.id))){busy=true;setTimeout(noMoves,650)}
+  if(!tray.some(t=>t&&anyFit(board,t.id))&&!(hold&&anyFit(board,hold.id))){busy=true;setTimeout(noMoves,650)}
   saveFree();
 }
 function noMoves(){if(rescue>0&&anyFit(board,0)){pop('pRescue')}else gameOver()}
@@ -577,9 +588,9 @@ function startAdv(s){flowTok++;mode='adv';info=stageInfo(s);reset();if(info.ston
     +`<text x="200" y="401" text-anchor="middle" font-size="11.5" fill="rgba(255,255,255,.85)">블록 ${info.par}개 안에 깨면 별 3개</text></g>`,2300);
   say(info.boss?'보스다! 화이팅!':'서희야, 화이팅!');save.last=s;store()}
 function startFree(cont){mode='free';info=null;reset();
-  if(cont&&save.free){const f=save.free;board=f.b;tray=f.t;score=f.s;combo=f.c;noClear=f.n;rescue=f.r}else{save.free=null;refill()}
+  if(cont&&save.free){const f=save.free;board=f.b;tray=f.t;hold=f.h||null;score=f.s;combo=f.c;noClear=f.n;rescue=f.r}else{save.free=null;refill()}
   show('game');draw();saveFree();
-  if(!tray.some(t=>t&&anyFit(board,t.id))){busy=true;setTimeout(noMoves,500)}}
+  if(!tray.some(t=>t&&anyFit(board,t.id))&&!(hold&&anyFit(board,hold.id))){busy=true;setTimeout(noMoves,500)}}
 
 /* ============ 화면 이동 ============ */
 function show(id){screen=id;document.querySelectorAll('.scr').forEach(s=>s.classList.toggle('on',s.id===id));$('game').style.display=id==='game'?'':'none';pop(null);if(id!=='game'){flowTok++;drag=null;$('drag').innerHTML=''}}
@@ -634,16 +645,25 @@ window.addEventListener('popstate',()=>{try{history.pushState({g:1},'')}catch(e)
 /* ============ 손가락으로 끌기 ============ */
 const sv=$('sv');
 function pt(e){const r=sv.getBoundingClientRect();return{x:(e.clientX-r.left)*VW/r.width,y:(e.clientY-r.top)*VH/r.height}}
-function updDrag(P){const t=tray[drag.i],p=SHP[t.id];drag.x=P.x;drag.y=P.y;
-  const c=Math.round((P.x-p.w*CS/2-BX)/CS),r=Math.round((P.y-LIFT-p.h*CS/2-BY)/CS),ok=fits(board,t.id,r,c);
+// 손가락이 보관함 위에 있는지 (보관함에 넣기)
+const overHold=P=>P.x<HX+TW/2+6&&P.y>SY-70&&P.y<SY+70;
+function updDrag(P){const t=pc(drag.i),p=SHP[t.id];drag.x=P.x;drag.y=P.y;
+  drag.overHold=drag.i!=='h'&&overHold(P);
+  const c=Math.round((P.x-p.w*CS/2-BX)/CS),r=Math.round((P.y-LIFT-p.h*CS/2-BY)/CS),ok=!drag.overHold&&fits(board,t.id,r,c);
   if(ok&&(r!==drag.r||c!==drag.c))sfx('tick');drag.r=r;drag.c=c;drag.ok=ok;drawCells();drawTray();drawDrag()}
+// 새 블록을 보관함에 넣기 (보관함에 있던 블록은 그 자리로 바뀜)
+function putHold(i){const t=tray[i];tray[i]=hold;hold=t;sfx('pick');buzz(15);say(tray[i]?'다시 쏙!':'보물함에 쏙!');
+  if(tray.every(x=>!x))refill();
+  if(!tray.some(x=>x&&anyFit(board,x.id))&&!(hold&&anyFit(board,hold.id))){busy=true;setTimeout(noMoves,650)}
+  saveFree();draw()}
 sv.addEventListener('pointerdown',e=>{if(screen!=='game')return;ensureAudio();const P=pt(e);
   if(P.y<52){if(Math.abs(P.x-330)<20)toggleMusic();else if(Math.abs(P.x-368)<20)askExit();return}
   if(busy||anyPop()||drag)return;
-  if(P.y>SY-80&&P.y<SY+80){const i=P.x<136?0:P.x<264?1:2;if(!tray[i])return;
+  if(P.y>SY-80&&P.y<SY+80){const i=P.x<108?'h':P.x<204?0:P.x<300?1:2;if(!pc(i))return;
     drag={i,x:P.x,y:P.y,ok:false,r:-9,c:-9,id:e.pointerId};try{sv.setPointerCapture(e.pointerId)}catch(_){}sfx('pick');buzz(8);updDrag(P)}});
 sv.addEventListener('pointermove',e=>{if(drag&&e.pointerId===drag.id)updDrag(pt(e))});
-sv.addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;if(d.ok)placePiece(d.i,d.r,d.c);else{sfx('back');draw()}});
+sv.addEventListener('pointerup',e=>{if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;
+  if(d.ok)placePiece(d.i,d.r,d.c);else if(d.overHold)putHold(d.i);else{sfx('back');draw()}});
 sv.addEventListener('pointercancel',()=>{drag=null;draw()});
 
 /* ============ 처음 그리기 ============ */
